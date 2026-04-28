@@ -138,7 +138,12 @@ def _sidebar() -> tuple[bytes | None, dict]:
         "Min persistence to plot", 0.00, 0.50, 0.05, 0.01,
         help="Bars below this lifetime are dropped before plotting / scoring.",
     )
-    top_k = st.sidebar.slider("Top-k features to highlight", 1, 12, 5)
+    top_k = st.sidebar.slider(
+        "Top-k features to highlight", 1, 12, 5,
+        help="Budget is split across H₀ (bright components) and H₁ (loops) so "
+        "loop features stay visible on non-skull-stripped images where H₀ "
+        "tends to be dominated by skull/scalp brightness.",
+    )
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(DISCLAIMER)

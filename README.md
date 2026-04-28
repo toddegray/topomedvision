@@ -79,13 +79,20 @@ tracks connected components (bright blobs); H₁ (red) tracks loops
 
 ### 3 · Highlight — turning persistence into a spatial mask
 
-![Highlight tab — top-k birth pixels and overlay mask](./assets/screenshot_highlight.png)
+![Highlight tab — top birth pixels and overlay mask](./assets/screenshot_highlight.png)
 
-The top-`k` most persistent features have their **birth pixels** marked
-on the slice (left), then flood-filled into an **overlay mask** (right).
-This is what makes persistence interpretable as a *highlight*: every
-red/blue circle traces back to a specific bar in the barcode you can
-click in the app.
+The top-`k` budget is split across H₀ (blue circles, bright connected
+components) and H₁ (red circles, loops). Each marker is the birth
+pixel of a specific persistence bar, then flood-filled into an
+**overlay mask** (right) with tolerance proportional to that bar's
+persistence. The split matters: on non-skull-stripped MRI like the
+shipped samples, the *unbalanced* top-5 is dominated by skull/scalp
+H₀ features (saturated bright pixels at the perimeter) and the lesion
+loop never makes the cut. With the balanced split, the H₁ loop on the
+ring-enhanced lesion (right side of the image, mid-height) gets
+selected and its flood-fill region is what overlays the tumor in the
+mask. See `select_top_features` in
+[`backend/persistence.py`](backend/persistence.py).
 
 ### 4 · Prediction — the score and the reason for it
 

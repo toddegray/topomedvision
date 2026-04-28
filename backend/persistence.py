@@ -366,6 +366,51 @@ def _uf_persistence(
 # ---------------------------------------------------------------------------
 
 
+def select_top_features(
+    pairs: Sequence[PersistencePair],
+    top_k: int = 5,
+    *,
+    min_persistence: float = 0.0,
+    balanced: bool = True,
+) -> list[PersistencePair]:
+    """Pick ``top_k`` features for highlighting.
+
+    With ``balanced=True`` (default) the budget is split across topological
+    dimensions present in ``pairs`` — top ``ceil(top_k/n_dims)`` of each.
+    Without that, on non-skull-stripped MRI the H0 ranking is dominated by
+    skull/scalp brightness and H1 (loop) features get crowded out, even
+    though loops are typically the more diagnostic signal for ring-enhanced
+    lesions.
+
+    With ``balanced=False`` the selection is the naive top-k by persistence
+    across all dimensions.
+    """
+    finite = [
+        p for p in pairs
+        if p.birth_xy is not None
+        and not np.isinf(p.persistence)
+        and p.persistence >= min_persistence
+    ]
+    if not balanced:
+        return sorted(finite, key=lambda p: p.persistence, reverse=True)[:top_k]
+
+    by_dim: dict[int, list[PersistencePair]] = {}
+    for p in finite:
+        by_dim.setdefault(p.dim, []).append(p)
+    if not by_dim:
+        return []
+    for d in by_dim:
+        by_dim[d].sort(key=lambda p: p.persistence, reverse=True)
+
+    dims = sorted(by_dim.keys())
+    base, extra = divmod(top_k, len(dims))
+    out: list[PersistencePair] = []
+    for i, d in enumerate(dims):
+        n = base + (1 if i < extra else 0)
+        out.extend(by_dim[d][:n])
+    return out
+
+
 def topology_mask(
     image: np.ndarray,
     pairs: Sequence[PersistencePair],
@@ -373,6 +418,7 @@ def topology_mask(
     top_k: int = 5,
     min_persistence: float = 0.20,
     grow_radius: int = 4,
+    balanced: bool = True,
 ) -> np.ndarray:
     """Build a binary mask of the ``top_k`` highest-persistence features.
 
@@ -387,6 +433,10 @@ def topology_mask(
     Defaults err on the side of *under-covering*: a small, confident
     highlight is more useful than a flood that buries the original image.
 
+    With ``balanced=True`` (default) the ``top_k`` budget is split across
+    H0 and H1 via :func:`select_top_features`, which keeps loop features
+    visible on images where H0 is dominated by skull/scalp brightness.
+
     Returns
     -------
     np.ndarray
@@ -397,19 +447,15 @@ def topology_mask(
     mask = np.zeros((H, W), dtype=bool)
     yy, xx = np.ogrid[:H, :W]
 
-    finite = [
-        p for p in pairs
-        if p.birth_xy is not None
-        and not np.isinf(p.persistence)
-        and p.persistence >= min_persistence
-    ]
-    finite.sort(key=lambda p: p.persistence, reverse=True)
+    selected = select_top_features(
+        pairs, top_k=top_k, min_persistence=min_persistence, balanced=balanced
+    )
 
     # Cap per-seed area so one very-persistent feature can't flood the image.
     max_region_size = int(0.05 * H * W)
     fallback_radius_sq = 36  # 6-pixel radius
 
-    for pair in finite[:top_k]:
+    for pair in selected:
         x, y = pair.birth_xy
         if not (0 <= x < W and 0 <= y < H):
             continue

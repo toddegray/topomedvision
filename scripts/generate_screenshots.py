@@ -142,19 +142,16 @@ def _screenshot_persistence(result: dict, out: Path) -> None:
 
 def _screenshot_highlight(arr: np.ndarray, result: dict, out: Path) -> None:
     pairs = list(result["dim0"]) + list(result["dim1"])
+    selected = persistence.select_top_features(pairs, top_k=5, min_persistence=0.20)
     mask = persistence.topology_mask(arr, pairs, top_k=5, min_persistence=0.20)
     overlay = utils.overlay_mask(arr, mask)
 
     fig, axes = plt.subplots(1, 2, figsize=(8, 4))
     axes[0].imshow(arr, cmap="gray", vmin=0, vmax=1)
     axes[0].axis("off")
-    axes[0].set_title("Top-5 birth pixels (H₀ blue, H₁ red)")
-    finite = sorted(
-        [p for p in pairs if p.birth_xy is not None and not np.isinf(p.persistence)],
-        key=lambda p: p.persistence, reverse=True,
-    )
+    axes[0].set_title("Top birth pixels — balanced across H₀ (blue) and H₁ (red)")
     dim_colors = {0: "#1f77b4", 1: "#d62728"}
-    for rank, p in enumerate(finite[:5]):
+    for rank, p in enumerate(selected):
         x, y = p.birth_xy
         c = dim_colors.get(p.dim, "#ff3333")
         axes[0].scatter([x], [y], s=160, facecolors="none", edgecolors=c, linewidths=2.4)
