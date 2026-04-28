@@ -138,13 +138,34 @@ co-vary with image noise (medium bars at low thresholds) get penalized.
 ![Baseline tab — Otsu vs. topology highlight](./assets/screenshot_baseline.png)
 
 Side-by-side comparison with **Otsu thresholding**, the classical
-intensity-only baseline. Otsu fires on every bright pixel — including
-skull, scalp, and the contrast-enhanced lesion lumped together
-(~19 % coverage on the example). The **topology highlight** uses the
-*shape* of the intensity surface and concentrates on the few features
-with high persistence (~4 % coverage), focusing on the lesion's bright
-rim and a couple of structural landmarks instead of the whole bright
-foreground.
+intensity-only baseline. The two methods are answering different
+questions:
+
+- **Otsu (~19 % coverage on this slice)** asks *"which pixels are
+  bright?"* and lights up everything above its automatically-chosen
+  intensity threshold. On a non-skull-stripped MRI that means the
+  skull, the scalp, *and* the contrast-enhancing lesion all come back
+  in one undifferentiated mask. It picks up the tumor — but you can't
+  tell from the output that it did, because the lesion is visually
+  indistinguishable from the rim of the skull.
+- **Topology (~4 % coverage on this slice)** asks *"which features
+  survive across many thresholds?"* and flood-fills only around the
+  birth pixels of high-persistence bars. On this slice that lands on
+  the ring-enhanced lesion plus a couple of equally persistent skull
+  landmarks. It still includes some non-lesion structure, but the
+  selection is *attributable*: each highlighted region traces back to
+  a specific bar in the persistence diagram, so you can ask "why this
+  pixel?" and get a number, not a vibe.
+
+Lower coverage isn't intrinsically better — a 0 % mask would highlight
+nothing. The point of the comparison is that the two methods *fail
+differently*: Otsu's failure mode is "everything bright looks alike,"
+which a clinician can't act on; topology's failure mode is "a few
+non-lesion features have the same persistence as the lesion," which is
+at least a tractable problem (skull-strip first, raise the persistence
+threshold, or weight birth pixels by prior on lesion location). The
+"Skull and scalp signal" item under Limitations is the same observation
+from the other direction.
 
 ## Run it locally
 
