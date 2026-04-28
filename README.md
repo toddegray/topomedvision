@@ -163,14 +163,15 @@ questions:
   in one undifferentiated mask. It picks up the tumor — but you can't
   tell from the output that it did, because the lesion is visually
   indistinguishable from the rim of the skull.
-- **Topology (~4 % coverage on this slice)** asks *"which features
-  survive across many thresholds?"* and flood-fills only around the
-  birth pixels of high-persistence bars. On this slice that lands on
-  the ring-enhanced lesion plus a couple of equally persistent skull
-  landmarks. It still includes some non-lesion structure, but the
-  selection is *attributable*: each highlighted region traces back to
-  a specific bar in the persistence diagram, so you can ask "why this
-  pixel?" and get a number, not a vibe.
+- **Topology (~7 % coverage on this slice)** asks *"which features
+  survive across many thresholds?"* and flood-fills around the birth
+  pixels of high-persistence bars. The H₁ loop on the lesion fills
+  along the bright rim of the ring; H₀ features fill the connected
+  bright structures they were born on (here: skull/scalp). The mask
+  still includes non-lesion structure, but every highlighted region
+  is *attributable* — each one traces back to a specific bar in the
+  persistence diagram, so you can ask "why this pixel?" and get a
+  number, not a vibe.
 
 Lower coverage isn't intrinsically better — a 0 % mask would highlight
 nothing. The point of the comparison is that the two methods *fail

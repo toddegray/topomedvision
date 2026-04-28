@@ -460,23 +460,19 @@ def topology_mask(
         if not (0 <= x < W and 0 <= y < H):
             continue
 
-        if pair.dim == 0:
-            # H₀ births land on bright peaks → flood-fill within a tight
-            # intensity tolerance to capture the peak's plateau.
-            try:
-                region = segmentation.flood(img, (y, x), tolerance=0.10)
-            except Exception:
-                region = np.zeros_like(img, dtype=bool)
-                region[y, x] = True
-            if region.sum() > max_region_size:
-                # Escaped its peak — collapse to a small disk so we still
-                # mark something rather than over-flooding.
-                region = (yy - y) ** 2 + (xx - x) ** 2 <= fallback_radius_sq
-        else:
-            # H₁ births sit on (or near) the loop's defining cycle — often
-            # a saddle, not a local maximum, so flood-fill is unreliable.
-            # We just place a fixed disk marker at the birth pixel, which is
-            # where a radiologist's eye would look for the loop anyway.
+        # In superlevel filtration of the image, H₀ birth pixels sit on
+        # bright peaks and H₁ birth pixels sit on the bright rim of a loop
+        # surrounding a darker interior. Either way, flood-fill within a
+        # tight intensity tolerance traces a useful region: the peak's
+        # plateau for H₀, the bright rim for H₁. If the flood escapes
+        # (saturated pixels connecting through other bright structure),
+        # fall back to a small disk so the highlight still marks the seed.
+        try:
+            region = segmentation.flood(img, (y, x), tolerance=0.10)
+        except Exception:
+            region = np.zeros_like(img, dtype=bool)
+            region[y, x] = True
+        if region.sum() > max_region_size:
             region = (yy - y) ** 2 + (xx - x) ** 2 <= fallback_radius_sq
 
         mask |= region
