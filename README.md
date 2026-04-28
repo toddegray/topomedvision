@@ -153,35 +153,37 @@ consistent story instead of three.
 ![Baseline tab — Otsu vs. topology highlight](./assets/screenshot_baseline.png)
 
 Side-by-side comparison with **Otsu thresholding**, the classical
-intensity-only baseline. The two methods are answering different
-questions:
+intensity-only baseline. The honest comparison: at the pixel-mask
+level, neither method is dramatically better — both methods cover the
+lesion, both include skull and scalp, and both would benefit equally
+from a skull-stripping step (HD-BET or similar) before the
+highlighting layer. Otsu lights up 19 % of pixels, topology 7 %, but
+"smaller mask" isn't intrinsically a win.
 
-- **Otsu (~19 % coverage on this slice)** asks *"which pixels are
-  bright?"* and lights up everything above its automatically-chosen
-  intensity threshold. On a non-skull-stripped MRI that means the
-  skull, the scalp, *and* the contrast-enhancing lesion all come back
-  in one undifferentiated mask. It picks up the tumor — but you can't
-  tell from the output that it did, because the lesion is visually
-  indistinguishable from the rim of the skull.
-- **Topology (~7 % coverage on this slice)** asks *"which features
-  survive across many thresholds?"* and flood-fills around the birth
-  pixels of high-persistence bars. The H₁ loop on the lesion fills
-  along the bright rim of the ring; H₀ features fill the connected
-  bright structures they were born on (here: skull/scalp). The mask
-  still includes non-lesion structure, but every highlighted region
-  is *attributable* — each one traces back to a specific bar in the
-  persistence diagram, so you can ask "why this pixel?" and get a
-  number, not a vibe.
+The actual benefit of the topology pipeline is in the **metadata
+attached to each highlighted region**, not the mask shape itself:
 
-Lower coverage isn't intrinsically better — a 0 % mask would highlight
-nothing. The point of the comparison is that the two methods *fail
-differently*: Otsu's failure mode is "everything bright looks alike,"
-which a clinician can't act on; topology's failure mode is "a few
-non-lesion features have the same persistence as the lesion," which is
-at least a tractable problem (skull-strip first, raise the persistence
-threshold, or weight birth pixels by prior on lesion location). The
-"Skull and scalp signal" item under Limitations is the same observation
-from the other direction.
+| | Otsu | Topology |
+|---|---|---|
+| Per-region provenance | none — one undifferentiated mask | each region traces back to a specific bar in the persistence diagram |
+| Per-region typing | none | **H₀** (connected bright component) vs **H₁** (loop) |
+| Per-region ranking | none | persistence value (a robustness scalar) |
+| Detects "ring-enhanced" *as a category* | no — a ring and a solid blob both register as "above threshold" | yes — a ring registers as an H₁ class with its own persistence; a solid mass doesn't |
+| Behavior under input noise | threshold can flip; mask shape is unstable | bottleneck-distance stability bound (Cohen-Steiner–Edelsbrunner–Harer 2007): long bars stay long |
+
+The single most concrete win is the typing column. On this slice the
+H₁ feature at coord (161, 79) with persistence 0.704 *is* the
+ring-enhanced glioblastoma — the algorithm specifically labelled it as
+"this is a loop." Otsu can't say that. To Otsu, a ring lesion and a
+solid tumor and a bright skull edge are all just "bright pixels." If
+you care about answering "did this slice contain a ring-enhanced
+lesion specifically," topology gives you a structural answer, not just
+a brightness one.
+
+If all you want is "which pixels are above some intensity threshold,"
+Otsu is simpler, faster, and fine. Topology buys you nothing there.
+The point of this project is the structural / attributable side, not
+better segmentation per se.
 
 ## Run it locally
 
