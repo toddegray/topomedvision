@@ -265,8 +265,12 @@ def _tab_prediction(result: dict) -> None:
         st.metric(
             "Likelihood",
             f"{score_result.score * 100:.0f}%",
-            help=f"Self-reported confidence: {score_result.confidence:.0%} · "
-            f"Mode: {'rule + classifier' if classifier else 'rule-based only'}",
+            help=(
+                "The shipped classifier is a 6-sample stub demonstrating "
+                "the load path; it adds no generalizable signal. Score = "
+                "½·rule + ½·stub.predict_proba when loaded, else rule only. "
+                f"Mode: {'rule + stub blend' if classifier else 'rule-based only'}"
+            ),
         )
         if score_result.score > 0.7:
             st.error("Elevated topological signature.")

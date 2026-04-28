@@ -98,15 +98,24 @@ the Random Forest's `predict_proba`. With the shipped joblib loaded,
 score = ½ × rule + ½ × RF. It is *not* a calibrated probability — it's
 just the blended raw score.
 
+**The shipped Random Forest is a stub.** It was trained on the six
+sample images and does not generalize — with that little data, the
+forest just memorizes the training set, which means it sharpens the
+score on the six samples it has seen and contributes essentially noise
+on anything else. It is in the repo to exercise the train → save →
+load → blend code path end-to-end, so a real BraTS-trained classifier
+can drop in later without changing anything in
+[`backend/hybrid_model.py`](backend/hybrid_model.py) or
+[`app.py`](app.py). The actual diagnostic logic lives in
+[`_RULE_WEIGHTS`](backend/hybrid_model.py) as hand-coded constants.
+
 The **bar chart shows the per-feature contributions of the rule
-scorer**, i.e. `weight × feature_value` for each entry in
-[`_RULE_WEIGHTS` in `backend/hybrid_model.py`](backend/hybrid_model.py).
-Those weights are constants chosen by hand to encode the math intuition
-from the next section — they were not learned. The Random Forest
-contributes to the gauge number, but its feature importances are not
-what the bar chart is plotting; the explanation panel is rule-only by
-design, because rule weights are interpretable in a way RF importances
-aren't. (Improving this is on the future-work list.)
+scorer** only — `weight × feature_value` for each entry in
+`_RULE_WEIGHTS`. The RF half of the gauge is *not* decomposed in the
+chart; rule weights are interpretable in a way RF importances aren't,
+so the explanation panel is rule-only by design. (Adding an honest RF
+explanation via SHAP is on the future-work list, and would only matter
+once a real BraTS-trained model is in place.)
 
 For the ring-enhanced glioblastoma above, the top contributions read as:
 
@@ -339,12 +348,14 @@ know which code path produced the diagram.
   `CubicalComplex` accepts arbitrary-dimensional cubical input — but the
   preprocessing, mask flood-fill, feature vector, scorer, and Streamlit
   UI would all need work; "swap an argument" undersells it.
-- **No clinical training data.** The shipped Random Forest is trained on
-  six real MRI slices by `scripts/train_classifier.py` — far too few to
-  generalize, so it trivially memorizes them. Drop a larger labelled
-  corpus (e.g. BraTS slices) into `data/samples/`, update `labels.json`,
-  and rerun the training script for a meaningful classifier. The
-  rule-based scorer remains as a fallback when no model is loaded.
+- **The shipped classifier is a stub.** `scripts/train_classifier.py`
+  trains a Random Forest on the six bundled MRI slices, which memorizes
+  them; on unseen images its contribution is noise. The joblib exists
+  so the train → save → load → blend code path is wired up — a real
+  BraTS-trained classifier can be dropped in (after enlarging
+  `data/samples/` and updating `labels.json`) without touching any call
+  sites. Until then, the rule scorer in `backend/hybrid_model.py` is
+  what actually carries the prediction.
 - **Tiny sample set.** Six images is enough to demonstrate the topology
   fingerprint qualitatively but nowhere near enough to make accuracy
   claims. Real BraTS-scale evaluation needs hundreds-to-thousands of

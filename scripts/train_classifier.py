@@ -1,15 +1,16 @@
-"""Train the demo classifier on the shipped MRI samples.
+"""Train (or retrain) the stub Random Forest classifier.
 
-This script lives separate from the app because training is a one-off
-operation: run it once, save the model to
-``models/topo_classifier.joblib``, and the Streamlit app picks it up
-automatically.
+The shipped ``models/topo_classifier.joblib`` is a 6-sample stub: with
+that many training images, a Random Forest just memorizes them and
+contributes nothing generalizable to unseen scores.  Its purpose in
+the repo is to exercise the train -> save -> load -> blend code path
+end-to-end, so a real BraTS-trained model can be dropped in later
+without touching ``backend/hybrid_model.py`` or ``app.py``.
 
-The classifier is a small Random Forest trained on the 14-D persistence
-feature vector defined in :mod:`backend.hybrid_model`.  With only six
-training images it will trivially memorize them — that's by design for
-the demo, not a generalization claim.  Swap in a larger labelled corpus
-(e.g. BraTS slices) to get a meaningful classifier.
+The actual diagnostic-style logic lives in ``_RULE_WEIGHTS`` in
+``backend/hybrid_model.py`` (a hand-coded weighted sum), and is what
+the Prediction tab's bar chart decomposes regardless of whether this
+classifier is present.
 
 Run::
 

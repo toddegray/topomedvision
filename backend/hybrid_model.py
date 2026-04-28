@@ -1,9 +1,8 @@
 """Hybrid topological + statistical scoring for tumor likelihood.
 
-The "model" here is intentionally simple — this is a research prototype,
-not a clinical tool.  The point is to show how *topological features*
-feed into a downstream learned (or rule-based) classifier in a way
-that's interpretable.
+This is a research prototype, not a clinical tool.  The interesting
+work is the rule-based scorer — the optional sklearn classifier path is
+*scaffolding* for a future BraTS-trained model, not a live ML component.
 
 Pipeline
 --------
@@ -11,17 +10,19 @@ Pipeline
    length feature vector (Betti curves + persistence-lifetime statistics +
    intensity statistics of the image).  This is the "topological fingerprint."
 
-2. ``score_tumor_likelihood`` combines the feature vector with image
-   statistics into a [0, 1] score plus a short natural-language explanation.
-   It can run in two modes:
+2. ``score_tumor_likelihood`` combines the feature vector into a [0, 1]
+   score plus a short natural-language explanation.  Two modes:
 
    - **Rule-based** (default; no training data required): a hand-tuned
-     weighted sum that's explicit and inspectable.  This is what runs in the
-     demo out of the box.
-   - **Learned**: if a scikit-learn classifier is loaded via
-     :func:`load_classifier`, its predicted probability is blended with the
-     rule-based score.  The training script for this is left as a stretch
-     goal (see :func:`train_classifier`).
+     weighted sum (see ``_RULE_WEIGHTS``) that is explicit and inspectable.
+     The bar chart in the Streamlit Prediction tab decomposes this score.
+   - **Rule + stub blend**: if a scikit-learn classifier is loaded via
+     :func:`load_classifier`, its ``predict_proba`` is averaged 50/50 with
+     the rule-based score.  The shipped joblib was trained on six images
+     (see :func:`train_classifier`), which is far too few to generalize —
+     it overfits and its main effect is to sharpen the score on those exact
+     six samples.  The path exists so a real BraTS-trained classifier can
+     drop in without touching the call sites.
 
 We intentionally keep the explanation a plain string — for an XAI demo,
 "this score is high because there are 3 long-persisting connected components
@@ -183,9 +184,15 @@ def score_tumor_likelihood(
 ) -> ScoreResult:
     """Score and explain tumor likelihood.
 
-    If a fitted scikit-learn classifier is supplied, its ``predict_proba``
-    output is averaged with the rule-based score.  Otherwise we use only the
-    rule-based score.
+    Returns a rule-based score by default.  If ``classifier`` is supplied,
+    its ``predict_proba`` is averaged 50/50 with the rule score; the
+    returned ``contributions`` dict still decomposes only the rule half
+    (the bar chart in the Streamlit Prediction tab plots that dict).
+
+    The shipped classifier is a 6-sample stub — it overfits and its
+    contribution is essentially noise on unseen images.  See module
+    docstring for the full caveat.  The blend exists so a real
+    BraTS-trained model can be dropped in without changing call sites.
     """
     features = persistence_features(pairs_dim0, pairs_dim1, image=image)
     rule_score, contribs = _rule_based_score(features)
