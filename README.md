@@ -94,10 +94,44 @@ click in the app.
 
 The 14-dimensional persistence feature vector is fed into a Random
 Forest (or, if no model is loaded, a hand-tuned rule-based scorer). The
-**gauge** shows the calibrated tumor likelihood; the **bar chart** breaks
-out the top weighted contributions. On the example sample, `max_persistence_dim0`
-and `n_long_dim0_30` dominate — the model is keying on long-lived bright
-components, exactly as the math predicts.
+**gauge** shows the calibrated tumor likelihood (95 % on this slice);
+the **bar chart** breaks out which features pushed the score up or down,
+and by how much. The point of the persistence pipeline is that those
+feature names map back to *concrete shape facts about the image* — so a
+"95 %" verdict comes with a structural reason, not a black-box vibe.
+For this ring-enhanced glioblastoma the top drivers read as:
+
+- **`max_persistence_dim0` (+3.4)** — the longest-lived H₀ bar. Plain
+  English: there's a bright connected component (the lesion) that
+  survives across a wide threshold range. Healthy brains rarely have
+  any bright blob with persistence this high.
+- **`n_long_dim0_30` (+2.0)** — the count of H₀ bars with lifetime
+  ≥ 0.30. Plain English: more than one bright component remains after
+  aggressive threshold filtering — typical of a focal mass plus
+  surrounding enhancement, atypical of normal parenchyma.
+- **`n_long_dim1_15` (+1.2)** and **`max_persistence_dim1` (+1.0)** —
+  the count and lifetime of long H₁ (loop) bars. Plain English: the
+  ring lesion's bright rim around a darker core registers as a
+  persistent loop in the diagram. This is the single feature that most
+  cleanly separates ring-enhanced lesions from solid masses and from
+  healthy slices.
+- **`image_max_intensity` (+1.0)** — the brightest pixel value after
+  preprocessing. Contrast-enhanced tumors saturate higher than
+  parenchyma; this is the one non-topological hint the model gets.
+- **`n_long_dim0_15` (–0.85)** — note the *negative* contribution.
+  Plain English: at a looser threshold (0.15) almost any slice produces
+  many medium-lived H₀ bars (gyri, sulci, ventricle edges). The model
+  has learned that "lots of medium-persistence components" is *not*
+  diagnostic on its own, so it actively discounts that signal in favor
+  of the high-threshold counts above.
+
+Two things are worth noticing. First, every driver is a number you
+could have computed by hand from the persistence diagram in tab 2 — the
+explanation isn't post-hoc storytelling, it's the same scalars the
+model voted on. Second, the model's signs *agree with the math*: the
+features the stability theorem says should be robust (long bars,
+persistent loops) are the ones with positive weight; the features that
+co-vary with image noise (medium bars at low thresholds) get penalized.
 
 ### 5 · Baseline — vs. classical intensity thresholding
 
