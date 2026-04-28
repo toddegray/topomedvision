@@ -1,9 +1,9 @@
 """Hybrid topological + statistical scoring for tumor likelihood.
 
-The "model" here is intentionally simple — this is a research/portfolio
-prototype, not a clinical tool.  The point is to show how *topological
-features* feed into a downstream learned (or rule-based) classifier in a
-way that's interpretable.
+The "model" here is intentionally simple — this is a research prototype,
+not a clinical tool.  The point is to show how *topological features*
+feed into a downstream learned (or rule-based) classifier in a way
+that's interpretable.
 
 Pipeline
 --------

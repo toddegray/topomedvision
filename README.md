@@ -14,8 +14,8 @@ short_description: Cubical persistent homology for MRI tumor highlighting
 # TopoMedVision 🧠
 
 > **Topological deep learning for brain tumor highlighting in MRI.**
-> A research/portfolio prototype that pairs *cubical persistent homology* with
-> a lightweight classifier to surface candidate tumor regions in 2D MRI
+> A research prototype that pairs *cubical persistent homology* with a
+> lightweight classifier to surface candidate tumor regions in 2D MRI
 > slices — and explains *why* it flagged them.
 
 > ⚠️ **Educational prototype only.** Not FDA-approved. Not for clinical use.
@@ -349,12 +349,3 @@ government and are therefore in the public domain in the United States.
 - BraTS challenge. https://www.med.upenn.edu/cbica/brats2020/
 - Karpathy, [CS231n notes on the neuron model](https://cs231n.github.io/neural-networks-1/).
 - SIIM TDL track / educational resources.
-
-## Ethical & portfolio notes
-
-This demo was built to show **bridging classical neural networks with
-modern topological math** for healthcare imaging robustness. It is *not* a
-medical device. If you're showing it in interviews, lead with the
-mathematical idea (stability + interpretability) and the engineering
-trade-offs (gudhi vs. fallback backend, rule-based vs. learned scoring) —
-not with diagnostic claims.

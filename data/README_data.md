@@ -24,9 +24,9 @@ top-level README.
 | `06_tumor_ring_recurrent.png` | tumor | Recurrent multifocal glioblastoma |
 
 > ⚠️ **Disclaimer:** These are real diagnostic images released for
-> teaching, but TopoMedVision is a research/portfolio prototype. It is
-> not FDA-approved and not for clinical decision-making. Do not use any
-> output from this tool to inform patient care.
+> teaching, but TopoMedVision is a research prototype — not FDA-approved
+> and not for clinical decision-making. Do not use any output from this
+> tool to inform patient care.
 
 ## Using your own data
 
