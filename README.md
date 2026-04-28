@@ -34,9 +34,8 @@ A standard neural unit is a weighted sum followed by a nonlinearity —
 features from raw pixel intensities. **Topological deep learning (TDL)**
 augments that picture with features derived from the *shape* of the data —
 invariants that survive small deformations, noise, and acquisition
-differences. That makes it especially attractive for medical imaging, where
-robustness to scanner-to-scanner variation matters more than squeezing the
-last 0.5 % of accuracy on a clean benchmark.
+differences. That property is attractive for medical imaging, where
+scanner-to-scanner variation can derail a model trained on clean data.
 
 This project demonstrates the bridge:
 
@@ -92,46 +91,46 @@ click in the app.
 
 ![Prediction tab — tumor likelihood gauge and feature drivers](./assets/screenshot_prediction.png)
 
-The 14-dimensional persistence feature vector is fed into a Random
-Forest (or, if no model is loaded, a hand-tuned rule-based scorer). The
-**gauge** shows the calibrated tumor likelihood (95 % on this slice);
-the **bar chart** breaks out which features pushed the score up or down,
-and by how much. The point of the persistence pipeline is that those
-feature names map back to *concrete shape facts about the image* — so a
-"95 %" verdict comes with a structural reason, not a black-box vibe.
-For this ring-enhanced glioblastoma the top drivers read as:
+The score on the gauge (95 % on this slice) is the **average of two
+scorers**: a hand-coded rule-based weighted sum over the 14-D
+persistence feature vector, plus, if a trained classifier is on disk,
+the Random Forest's `predict_proba`. With the shipped joblib loaded,
+score = ½ × rule + ½ × RF. It is *not* a calibrated probability — it's
+just the blended raw score.
 
-- **`max_persistence_dim0` (+3.4)** — the longest-lived H₀ bar. Plain
-  English: there's a bright connected component (the lesion) that
-  survives across a wide threshold range. Healthy brains rarely have
-  any bright blob with persistence this high.
-- **`n_long_dim0_30` (+2.0)** — the count of H₀ bars with lifetime
-  ≥ 0.30. Plain English: more than one bright component remains after
-  aggressive threshold filtering — typical of a focal mass plus
-  surrounding enhancement, atypical of normal parenchyma.
+The **bar chart shows the per-feature contributions of the rule
+scorer**, i.e. `weight × feature_value` for each entry in
+[`_RULE_WEIGHTS` in `backend/hybrid_model.py`](backend/hybrid_model.py).
+Those weights are constants chosen by hand to encode the math intuition
+from the next section — they were not learned. The Random Forest
+contributes to the gauge number, but its feature importances are not
+what the bar chart is plotting; the explanation panel is rule-only by
+design, because rule weights are interpretable in a way RF importances
+aren't. (Improving this is on the future-work list.)
+
+For the ring-enhanced glioblastoma above, the top contributions read as:
+
+- **`max_persistence_dim0` (+3.4)** — the longest H₀ bar (longest-lived
+  bright connected component). Large here because the lesion stays
+  connected across a wide range of thresholds.
+- **`n_long_dim0_30` (+2.0)** — count of H₀ bars with lifetime ≥ 0.30:
+  more than one bright component survives aggressive threshold filtering.
 - **`n_long_dim1_15` (+1.2)** and **`max_persistence_dim1` (+1.0)** —
-  the count and lifetime of long H₁ (loop) bars. Plain English: the
-  ring lesion's bright rim around a darker core registers as a
-  persistent loop in the diagram. This is the single feature that most
-  cleanly separates ring-enhanced lesions from solid masses and from
-  healthy slices.
-- **`image_max_intensity` (+1.0)** — the brightest pixel value after
-  preprocessing. Contrast-enhanced tumors saturate higher than
-  parenchyma; this is the one non-topological hint the model gets.
-- **`n_long_dim0_15` (–0.85)** — note the *negative* contribution.
-  Plain English: at a looser threshold (0.15) almost any slice produces
-  many medium-lived H₀ bars (gyri, sulci, ventricle edges). The model
-  has learned that "lots of medium-persistence components" is *not*
-  diagnostic on its own, so it actively discounts that signal in favor
-  of the high-threshold counts above.
+  H₁ (loop) features. The bright rim around the dark necrotic core is
+  a topological loop; in healthy parenchyma there's nothing comparable.
+- **`image_max_intensity` (+1.0)** — brightest pixel after
+  preprocessing. The one non-topological hint in the rule.
+- **`n_long_dim0_15` (–0.85)** — *negative* hand-coded weight. At the
+  looser 0.15 threshold, gyri / sulci / ventricle edges already produce
+  many medium-lived H₀ bars, so the rule penalizes that count to
+  prevent it from dominating the high-threshold signals above.
 
-Two things are worth noticing. First, every driver is a number you
-could have computed by hand from the persistence diagram in tab 2 — the
-explanation isn't post-hoc storytelling, it's the same scalars the
-model voted on. Second, the model's signs *agree with the math*: the
-features the stability theorem says should be robust (long bars,
-persistent loops) are the ones with positive weight; the features that
-co-vary with image noise (medium bars at low thresholds) get penalized.
+The point of this section isn't "the model figured out that long bars
+mean tumor" — a human wrote that in. The point is that *the explanation
+and the score share a representation*: every bar in the chart is a
+scalar you could read off the persistence diagram in tab 2 by hand.
+That's what makes the highlight, the score, and the diagram tell one
+consistent story instead of three.
 
 ### 5 · Baseline — vs. classical intensity thresholding
 
@@ -219,8 +218,9 @@ git push space main
 ```
 
 After the push, HF Spaces installs `requirements.txt` and runs `app.py`
-automatically. The first start takes ~60s while gudhi compiles into the
-container. The Space's public URL is shareable as your demo link.
+automatically. The first build can take a while because gudhi compiles
+from source in the container. The Space's public URL is shareable as
+your demo link.
 
 ## Architecture
 
@@ -259,17 +259,18 @@ topomedvision/
 │   ├── hybrid_model.py      # 14-D feature vector + rule/learned scorer
 │   └── visualization.py     # matplotlib + plotly views
 ├── data/
-│   ├── generate_samples.py  # synthesizes 6 MRI-like PNGs
-│   ├── samples/             # populated by the script above
-│   └── README_data.md       # how to plug in real BraTS slices
+│   ├── samples/             # six real public-domain MRI PNGs + labels.json
+│   ├── generate_samples.py  # legacy synthetic-cartoon generator (not used)
+│   └── README_data.md       # sample sources, attribution, BraTS hookup
 ├── scripts/
-│   └── train_classifier.py  # trains the demo Random Forest on samples
+│   ├── train_classifier.py  # trains the demo Random Forest on samples
+│   └── generate_screenshots.py  # regenerates assets/ for the README
 ├── notebooks/
 │   └── exploration.ipynb    # end-to-end walk-through
 ├── cpp_wrapper/
 │   └── README.md            # CubicalRipser interop (stretch)
-├── models/                  # pickled scikit-learn classifier (gitignored)
-└── assets/                  # logos, screenshots, diagrams
+├── models/                  # pickled scikit-learn classifier (tracked)
+└── assets/                  # screenshots used by the README
 ```
 
 ## Math background
@@ -314,9 +315,10 @@ Pixel-level CNNs can get derailed by intensity scaling, scanner gain
 differences, or small geometric warps. Persistence is **stable** in a strong
 mathematical sense: if you perturb $f$ by at most $\varepsilon$ in the
 sup-norm, the bottleneck distance between persistence diagrams is at most
-$\varepsilon$ (Cohen-Steiner–Edelsbrunner–Harer 2007). The demo's
-preprocessing tab lets you toggle denoising and contrast equalization to
-see this in action — long bars stay long; only short, noisy bars shuffle.
+$\varepsilon$ (Cohen-Steiner–Edelsbrunner–Harer 2007). The Original tab
+exposes the denoise and CLAHE toggles so you can perturb the input and
+compare diagrams; the stability theorem predicts that long bars should
+move only a little while short, noisy bars shuffle freely.
 
 ## Backends
 
@@ -333,8 +335,10 @@ know which code path produced the diagram.
 ## Limitations
 
 - **2D only.** Real diagnostic radiology reads volumes; this is a single
-  axial slice. Extending to 3D is a `gudhi.CubicalComplex` argument change
-  but increases compute cost.
+  2D slice. The persistence layer itself would generalize — gudhi's
+  `CubicalComplex` accepts arbitrary-dimensional cubical input — but the
+  preprocessing, mask flood-fill, feature vector, scorer, and Streamlit
+  UI would all need work; "swap an argument" undersells it.
 - **No clinical training data.** The shipped Random Forest is trained on
   six real MRI slices by `scripts/train_classifier.py` — far too few to
   generalize, so it trivially memorizes them. Drop a larger labelled
@@ -349,8 +353,9 @@ know which code path produced the diagram.
   skull-stripped, so persistent H₀ components from bright skull/scalp
   pixels contribute to the topology mask. A real pipeline would prepend
   a skull-stripping step (e.g. HD-BET) before the persistence layer.
-- **Compute.** A 192×192 slice takes ~0.5–1 s with `gudhi`, a few seconds
-  with the pure-NumPy fallback. Larger slices grow super-linearly with
+- **Compute.** Measured on this laptop, a 192×192 slice takes ~70 ms
+  with `gudhi` and ~270 ms with the pure-NumPy fallback (median of
+  several runs after warm-up). Larger slices grow super-linearly with
   pixel count.
 - **No segmentation guarantee.** The flood-fill mask is a *highlight*, not
   a segmentation. It will under-cover diffuse lesions and miss any
@@ -383,6 +388,11 @@ government and are therefore in the public domain in the United States.
   superlevel-set graph and run a learned simplicial attention layer on top.
 - **Persistence images** as input to a small CNN for an end-to-end learned
   variant; compare to the rule-based scorer on a held-out set.
+- **Honest RF explanations.** Today the bar chart in the Prediction tab
+  shows the rule scorer's hand-coded contributions only; the RF half of
+  the score isn't decomposed. Plug in SHAP (or RF feature contributions
+  via `treeinterpreter`) so the explanation reflects both halves of the
+  blended score.
 - **CubicalRipser C++ subprocess** for an order-of-magnitude speedup on
   larger slices; see [`cpp_wrapper/README.md`](./cpp_wrapper/README.md).
 - **Regulatory note.** Any clinical adaptation would need IRB review,
@@ -403,4 +413,3 @@ government and are therefore in the public domain in the United States.
   2023. (TopoModelX / TopoNetX).
 - BraTS challenge. https://www.med.upenn.edu/cbica/brats2020/
 - Karpathy, [CS231n notes on the neuron model](https://cs231n.github.io/neural-networks-1/).
-- SIIM TDL track / educational resources.
