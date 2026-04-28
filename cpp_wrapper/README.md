@@ -2,9 +2,9 @@
 
 This directory documents how to wire the original C++ implementation of
 **CubicalRipser** into the demo. The Streamlit app does *not* require this —
-it ships with a `gudhi` backend and a pure-NumPy fallback. The wrapper is
-here as a portfolio extension showing C++/Python interop on real scientific
-code.
+it ships with a `gudhi` backend and a pure-NumPy fallback. The notes here
+are a stretch path for swapping in the C++ implementation if you want the
+extra speed or a clean process boundary for profiling.
 
 ## Why CubicalRipser?
 
