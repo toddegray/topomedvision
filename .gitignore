@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Models / artefacts: the demo classifier is small and deterministic, so we
+# track it for one-step deployment (Hugging Face Spaces / share.streamlit).
+# Untrained / experimental artefacts go elsewhere; only commit
+# models/topo_classifier.joblib via `git add -f`.
+models/*.pt
+models/scratch/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Pytest cache
+.pytest_cache/
+
+# Local Claude Code permissions (user-specific)
+.claude/settings.local.json

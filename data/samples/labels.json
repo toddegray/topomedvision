@@ -1,0 +1,72 @@
+[
+  {
+    "file": "01_healthy_axial_t1.png",
+    "label": "healthy",
+    "ring_enhanced": false,
+    "orientation": "axial",
+    "weighting": "T1",
+    "source": "Wikimedia Commons — File:T1t2PD.jpg (left panel cropped)",
+    "source_url": "https://commons.wikimedia.org/wiki/File:T1t2PD.jpg",
+    "author": "KieranMaher",
+    "license": "Public domain"
+  },
+  {
+    "file": "02_healthy_sagittal_t1.png",
+    "label": "healthy",
+    "ring_enhanced": false,
+    "orientation": "sagittal",
+    "weighting": "T1",
+    "source": "Wikimedia Commons — File:MRI_brain.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:MRI_brain.jpg",
+    "author": "Anonymous (US government work)",
+    "license": "Public domain"
+  },
+  {
+    "file": "03_tumor_solid_axial.png",
+    "label": "tumor",
+    "ring_enhanced": false,
+    "orientation": "axial",
+    "weighting": "T1 post-contrast",
+    "diagnosis": "Sub-ependymal giant cell astrocytoma",
+    "source": "Wikimedia Commons — File:MRI of brain with sub-ependymal giant cell astrocytoma.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:MRI_of_brain_with_sub-ependymal_giant_cell_astrocytoma.jpg",
+    "author": "Armed Forces Institute of Pathology (AFIP)",
+    "license": "Public domain (17 U.S.C. § 105)"
+  },
+  {
+    "file": "04_tumor_solid_sagittal.png",
+    "label": "tumor",
+    "ring_enhanced": false,
+    "orientation": "sagittal",
+    "weighting": "T1 post-contrast",
+    "diagnosis": "Pilocytic astrocytoma, hypothalamic region",
+    "source": "Wikimedia Commons — File:405615R-PA-HYPOTHALAMIC.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:405615R-PA-HYPOTHALAMIC.jpg",
+    "author": "Armed Forces Institute of Pathology (AFIP)",
+    "license": "Public domain (17 U.S.C. § 105)"
+  },
+  {
+    "file": "05_tumor_ring_axial.png",
+    "label": "tumor",
+    "ring_enhanced": true,
+    "orientation": "axial",
+    "weighting": "T1 post-contrast",
+    "diagnosis": "Glioblastoma multiforme (textbook ring enhancement)",
+    "source": "Wikimedia Commons — File:AFIP-00405558-Glioblastoma-Radiology.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:AFIP-00405558-Glioblastoma-Radiology.jpg",
+    "author": "Armed Forces Institute of Pathology (AFIP)",
+    "license": "Public domain (17 U.S.C. § 105)"
+  },
+  {
+    "file": "06_tumor_ring_recurrent.png",
+    "label": "tumor",
+    "ring_enhanced": true,
+    "orientation": "axial",
+    "weighting": "T1 post-contrast",
+    "diagnosis": "Recurrent glioblastoma multiforme (multifocal)",
+    "source": "Wikimedia Commons — File:AFIP-00405589-Glioblastoma-Radiology.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:AFIP-00405589-Glioblastoma-Radiology.jpg",
+    "author": "Armed Forces Institute of Pathology (AFIP)",
+    "license": "Public domain (17 U.S.C. § 105)"
+  }
+]

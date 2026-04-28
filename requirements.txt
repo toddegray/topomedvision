@@ -1,0 +1,27 @@
+# --- Core demo dependencies (required) ---
+streamlit>=1.30
+numpy>=1.24
+pillow>=10.0
+scikit-image>=0.22
+scikit-learn>=1.3
+matplotlib>=3.7
+plotly>=5.18
+
+# --- Topological data analysis ---
+# gudhi is the primary backend for cubical persistent homology.
+# If installation fails on your platform, the project falls back to a
+# pure-NumPy 0D persistence implementation (union-find over sublevel sets).
+gudhi>=3.9 ; platform_system != "Windows" or python_version < "3.13"
+
+# --- Optional / stretch goals ---
+# Uncomment to enable a torch-based hybrid classifier on persistence images.
+# torch>=2.1
+# torchvision>=0.16
+
+# Uncomment for the CubicalRipser binding (requires a working C++ toolchain).
+# Build instructions live in cpp_wrapper/README.md.
+# cripser>=0.0.5
+
+# Uncomment for higher-order topological neural networks (stretch goal).
+# topomodelx
+# toponetx
